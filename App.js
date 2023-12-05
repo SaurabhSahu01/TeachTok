@@ -1,12 +1,16 @@
-import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
+import HomeScreen from './screens/home';
+import HomeScreenScroll from './screens/homeScroll';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function App() {
   return (
+    <GestureHandlerRootView style={{ flex:1 }}>
     <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
+      {/* <HomeScreen/> */}
+      <HomeScreenScroll/> 
     </View>
+    </GestureHandlerRootView>
   );
 }
 
