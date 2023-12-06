@@ -1,81 +1,88 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { VirtualizedList, View, Animated, Text, FlatList, TouchableOpacity, ImageBackground, StyleSheet } from 'react-native';
-import { GestureHandlerRootView, PanGestureHandler, State } from 'react-native-gesture-handler';
+import React, { useState, useEffect } from 'react';
+import { View, Dimensions, Text, FlatList, TouchableOpacity, ImageBackground } from 'react-native';
 
-const AnimatedVirtualizedList = Animated.createAnimatedComponent(VirtualizedList);
-
+const dummyObj = { "type": "mcq", "id": 2979, "playlist": "Period 6: 1865-1898", "description": "5.5 Sectional Conflict: Regional Differences #apush", "question": "What were the two largest immigrant groups during the mid-1800's?", "image": "https://cross-platform-rwa.rp.devfactory.com/images/2979%20-%20german%20and%20irish%20immigrant%20groups.png", "options": [{ "id": "A", "answer": "German & Irish" }, { "id": "B", "answer": "Italian & German" }, { "id": "C", "answer": "Chinese & Japanese" }], "user": { "name": "AP US History", "avatar": "https://cross-platform-rwa.rp.devfactory.com/avatars/apush.png" } }
 
 const HomeScreen = () => {
 
-    const scrollX = useRef(new Animated.Value(0)).current;
-
-    const onPanGestureEvent = Animated.event(
-      [{ nativeEvent: { translationX: scrollX } }],
-      { useNativeDriver: true }
-    );
-  
-    const onPanHandlerStateChange = (event) => {
-      if (event.nativeEvent.state === State.END) {
-        // Perform any necessary actions when scrolling ends
-      }
-    };
-  const [ data, setData] = useState([])
-  const [mcqs, setMCQs] = useState([]);
+  const [mcq, setMcq] = useState([dummyObj]);
   const [answer, setAnswer] = useState(null)
-  const [clickedAnswer, setClickedAnswer] = useState(-1)
-  const [isLoading, setIsLoading] = useState(false);
-  const [bgImage, setBGImage] = useState()
-  //{"description": "5.5 Sectional Conflict: Regional Differences #apush", "id": 3794, "image": "https://cross-platform-rwa.rp.devfactory.com/images/3794%20-%20industrial%20vs%20agricultural%20economy.png", "options": [{"answer": "An industrial vs. agricultural economy", "id": "A"}, {"answer": "Income inequality", "id": "B"}, {"answer": "Dependence on imports", "id": "C"}], "playlist": "Period 6: 1865-1898", "question": "Aside from slavery, what was the most significant difference betweent the North and South during the mid-1800s?", "type": "mcq", "user": {"avatar": "https://cross-platform-rwa.rp.devfactory.com/avatars/apush.png", "name": "AP US History"}}
+  const [clickedAnswer, setClickedAnswer] = useState('Z')
+  const [isLoading, setIsLoading] = useState(true);
+
+  //{"description": "5.5 Sectional Conflict: Regional Differences #apush", "id": 3794, "image": "https://cross-platform-rwa.rp.devfactory.com/images/3794%20-%20industrial%20vs%20agricultural%20economy.png", 
+  // "options": [{"answer": "An industrial vs. agricultural economy", "id": "A"}, {"answer": "Income inequality", "id": "B"}, {"answer": "Dependence on imports", "id": "C"}], "playlist": "Period 6: 1865-1898", 
+  // "question": "Aside from slavery, what was the most significant difference betweent the North and South during the mid-1800s?", "type": "mcq", 
+  // "user": {"avatar": "https://cross-platform-rwa.rp.devfactory.com/avatars/apush.png", "name": "AP US History"}}
+
   useEffect(() => {
     loadData()
+    fetchMoreData()
   }, []);
 
   useEffect(() => {
-    mcqs && fetch(`https://cross-platform.rp.devfactory.com/reveal?id=${mcqs.id}`).then(res => res.json()).then(answer => {
+    mcq && fetch(`https://cross-platform.rp.devfactory.com/reveal?id=${mcq.id}`).then(res => res.json()).then(answer => {
       setAnswer(answer.correct_options[0].id)
     })
   }, [])
 
 
-  const fetchMoreData = () =>{
-    setTimeout(() => loadData, 1000)
+  const fetchMoreData = () => {
+    // setInterval(loadData, 10000)
   }
-  const loadData = () =>{
+
+  const loadData = () => {
+    setIsLoading(true)
     fetch('https://cross-platform.rp.devfactory.com/for_you')
-    .then(res => res.json())
-    .then(newdata => {
-    //   console.log(data)
-      setMCQs(newdata)
-      setData([...data, newdata])
-      setBGImage(newdata.image)
-    })
-    .catch(err => console.log(err))
+      .then(res => res.json())
+      .then(data => {
+        const newData = [data]
+        setMcq((prevData) => [...prevData, ...newData])
+      })
+      .catch(err => console.log(err))
+    setIsLoading(false)
   }
 
   const revealAnswer = (id) => {
-    console.log(mcqs.options)
+    console.log(mcq.options)
   };
 
-  const renderItem = ({ item }) =>{
-    console.log(item)
+  const getBgColor = () => {
+    let color = 'white'
+
+    if(clickedAnswer === 'Z') return color
+
+    if(clickedAnswer === answer) color = 'rgb(0, 255, 0)'
+    else if(clickedAnswer != answer ) color = 'rgb(255, 0, 0)'
+
+    return color
+  }
+
+  const renderItem = ({ item }) => {
+
     const options = item.options
-    return (   
-        <View>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', widht: '100%' }}>
-        <View style={{ padding: 30, color: 'blue', flex: 1, flexDirection: 'column', justifyContent: 'space-between' }}>
-          <Text style={{ color: 'white', backgroundColor: 'rgba(0,0,0,0.7)', fontSize: 20, padding: 10, borderRadius: 10 }}>{item.question}</Text>
-          
-        {options && options.map((item) => (
-            <TouchableOpacity onPress={() => {
-                setClickedAnswer(item.id)
-              }}>
-                <Text style={{ color: 'white', backgroundColor: `${(clickedAnswer !== -1 && item.id === clickedAnswer && clickedAnswer === answer) ? 'rgba(0,255,0,0.5)' : (clickedAnswer !== -1 && item.id === clickedAnswer && clickedAnswer !== answer) ? 'rgba(255,0,0,0.5)' : 'rgba(255,255,255,0.5)'}`, fontSize: 18, padding: 7, borderRadius: 10, textShadowColor: 'rgba(0, 0, 0, 0.75)', textShadowOffset: {width: -1, height: 1}, textShadowRadius: 10 }}>{item.answer}</Text>
-            </TouchableOpacity>
-          )) 
-        }  
+    return (
+      <ImageBackground source={{ uri: item.image }} resizeMode="cover" style={{ width: '100%', height: Dimensions.get('window').height + 30 }}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', width: '100%' }}>
+          <View style={{ padding: 30, color: 'blue', flex: 1, flexDirection: 'column', justifyContent: 'space-around' }}>
+            <Text style={{ color: 'white', backgroundColor: 'rgba(0,0,0,0.7)', fontSize: 20, padding: 10, borderRadius: 10 }}>{item.question}</Text>
+
+            <View style={{ flexDirection: 'column', gap: 20 }}>
+              {options && options.map((item, item_index) => (
+                <TouchableOpacity key={item_index} onPress={(a) => {
+                  console.log(item.id)
+                  setClickedAnswer(item.id)
+                }}>
+                  <View >
+                    <Text style={{ backgroundColor: getBgColor(), color: 'white', fontSize: 18, padding: 7, borderRadius: 10, textShadowColor: 'rgba(0, 0, 0, 0.75)', textShadowOffset: { width: -1, height: 1 }, textShadowRadius: 10 }}>{item.answer}</Text>
+                  </View>
+                </TouchableOpacity>
+              ))
+              }
+            </View>
+          </View>
         </View>
-      </View>
-      </View>
+      </ImageBackground>
     )
   }
 
@@ -90,40 +97,15 @@ const HomeScreen = () => {
   }
 
   return (
-   
-    <ImageBackground source={{ uri: bgImage }} resizeMode="cover" style={styles.image}>
-      <PanGestureHandler
-        onGestureEvent={onPanGestureEvent}
-        onHandlerStateChange={onPanHandlerStateChange}
-      >
-        <Animated.View>
-          <AnimatedVirtualizedList
-            pagingEnabled
-            showsHorizontalScrollIndicator={true}
-            data={data}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.key}
-            onScroll={Animated.event(
-              [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-              { useNativeDriver: true }
-            )}
-            scrollEventThrottle={10}
-            getItemCount={(data) => data.length} 
-            getItem={(data, index) =>data[index]}
-            onEndReached={fetchMoreData}
-          />
-        </Animated.View>
-      </PanGestureHandler>
-    </ImageBackground>
-  );
+    <FlatList
+      pagingEnabled
+      showsHorizontalScrollIndicator={true}
+      data={mcq}
+      renderItem={renderItem}
+      keyExtractor={(item) => `${item.id} + "" + ${mcq.length}`}
+  />
+);
 };
 
-const styles = StyleSheet.create({
-  image: {
-    flex: 1,
-    width: '100%',
-    height: '100%'
-  }
-});
 
 export default HomeScreen;
